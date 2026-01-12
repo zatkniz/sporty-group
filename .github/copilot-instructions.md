@@ -219,3 +219,4 @@ useHead({
 - [Nuxt UI Components](https://ui.nuxt.com/docs/components)
 - [Pinia Documentation](https://pinia.vuejs.org)
 - [Nitro Documentation](https://nitro.build)
+- [TheSportsDB API Documentation](https://www.thesportsdb.com/documentation)

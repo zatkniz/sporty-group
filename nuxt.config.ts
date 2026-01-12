@@ -5,5 +5,13 @@ export default defineNuxtConfig({
   
   modules: ['@nuxt/ui', '@pinia/nuxt', '@vueuse/nuxt'],
   
-  css: ['~/assets/css/main.css']
+  css: ['~/assets/css/main.css'],
+
+  runtimeConfig: {
+    theSportsDbApiKey: process.env.THESPORTSDB_API_KEY || '3',
+    public: {
+      theSportsDbBaseUrl: 'https://www.thesportsdb.com/api/v1/json',
+      theSportsDbApiKey: process.env.THESPORTSDB_API_KEY || '3'
+    }
+  }
 })
