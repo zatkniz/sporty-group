@@ -4,6 +4,13 @@ applyTo: "app/components/**/*.vue"
 
 # Vue Components Guidelines
 
+## ⚠️ CRITICAL: TypeScript Requirements
+
+- **ALWAYS use `lang="ts"`** in `<script setup>` tags
+- **NEVER define types inline** - import from `app/types/`
+- **ALWAYS use arrow functions** with explicit return types
+- See `typescript.instructions.md` for full TypeScript standards
+
 ## Auto-Import Convention
 
 Components in this directory are **automatically imported** throughout the application.
@@ -18,10 +25,14 @@ Components in this directory are **automatically imported** throughout the appli
 
 ```vue
 <script setup lang="ts">
+// Import types from centralized location
+import type { User } from '~/types'
+
 // TypeScript props definition
 interface Props {
   title: string
   count?: number
+  user?: User
 }
 
 const props = defineProps<Props>()
@@ -30,10 +41,16 @@ const props = defineProps<Props>()
 const route = useRoute()
 const config = useAppConfig()
 
-// Emits
+// Emits with explicit types
 const emit = defineEmits<{
   click: [value: string]
+  select: [user: User]
 }>()
+
+// Arrow function with return type
+const handleClick = (): void => {
+  emit('click', 'clicked')
+}
 </script>
 
 <template>
@@ -51,6 +68,9 @@ const emit = defineEmits<{
 
 ### Best Practices
 
+- **ALWAYS use `lang="ts"`** in `<script>` tags - NO EXCEPTIONS
+- **ALWAYS import types from `app/types/`** - NEVER define inline
+- **ALWAYS use arrow functions** with explicit return types
 - **DO NOT** import Vue functions (`ref`, `computed`, `watch`, etc.) - they're auto-imported
 - **DO NOT** import components - they're auto-imported
 - **DO** use TypeScript for props and emits

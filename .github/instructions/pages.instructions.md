@@ -4,6 +4,13 @@ applyTo: "app/pages/**/*.vue"
 
 # Pages & Routing Guidelines
 
+## ⚠️ CRITICAL: TypeScript Requirements
+
+- **ALWAYS use `lang="ts"`** in `<script setup>` tags
+- **NEVER define types inline** - import from `app/types/`
+- **ALWAYS use arrow functions** with explicit return types
+- See `typescript.instructions.md` for full TypeScript standards
+
 ## File-Based Routing
 
 Pages in this directory automatically create routes based on their file structure.

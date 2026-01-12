@@ -9,7 +9,7 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 - **Framework**: Nuxt 4.x
 - **UI Library**: Nuxt UI (Tailwind CSS + Reka UI)
 - **State Management**: Pinia (via @pinia/nuxt)
-- **Language**: TypeScript
+- **Language**: TypeScript (strict mode, arrow functions only, explicit types)
 - **Runtime**: Node.js 20.x+
 - **Package Manager**: npm/yarn/pnpm (check package.json for lock file)
 - **Build Tool**: Vite (default in Nuxt 4)
@@ -25,6 +25,7 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
   - `components/` - Auto-imported Vue components
   - `composables/` - Auto-imported composables (Vue Composition API functions)
   - `stores/` - Auto-imported Pinia stores (state management)
+  - `types/` - TypeScript type definitions (MUST be centralized here)
   - `layouts/` - Layout wrappers for pages
   - `assets/` - Uncompiled assets (CSS, images processed by build tool)
   - `middleware/` - Route middleware
@@ -75,6 +76,12 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 - Auto-imported Pinia stores
 - File: `app/stores/user.ts` → Use: `const userStore = useUserStore()`
 - Export stores using `defineStore()`, they'll be available globally
+
+**Types** (`app/types/`)
+- ALL TypeScript types, interfaces, and type definitions
+- File: `app/types/user.ts` → Import: `import type { User } from '~/types'`
+- NEVER define types inline in components or composables
+- Always export all types from this directory
 
 ### Routing
 
@@ -164,11 +171,16 @@ useHead({
 
 ## Important Notes
 
-### TypeScript
-- TypeScript is automatically configured
+### TypeScript (CRITICAL)
+- **ALWAYS use `lang="ts"`** in Vue components `<script>` tags
+- **ALL types MUST be in `app/types/`** - NEVER inline types
+- **ALWAYS use arrow functions** - no `function` keyword
+- **ALWAYS specify return types** on all functions
+- **ALWAYS explicit types** - no implicit `any`
 - Don't import Nuxt UI components - they're auto-imported with `U` prefix
 - Types are auto-generated in `.nuxt/` directory
 - No need to import Vue types, they're globally available
+- Import types with: `import type { User } from '~/types'`
 
 ### Imports
 - Don't import Vue functions (`ref`, `computed`, etc.) - they're auto-imported

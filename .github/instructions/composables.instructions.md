@@ -4,6 +4,14 @@ applyTo: "app/composables/**/*.ts,app/composables/**/*.js"
 
 # Composables Guidelines
 
+## ⚠️ CRITICAL: TypeScript Requirements
+
+- **ALWAYS use TypeScript** (`.ts` files only)
+- **NEVER define types inline** - import from `app/types/`
+- **ALWAYS use arrow functions** with explicit return types
+- **ALWAYS specify types** for parameters and return values
+- See `typescript.instructions.md` for full TypeScript standards
+
 ## Auto-Import Convention
 
 Composables in this directory are **automatically imported** and available globally throughout the application.
