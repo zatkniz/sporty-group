@@ -14,12 +14,15 @@ This directory contains custom instructions and skills for GitHub Copilot to bet
 │   ├── pages.instructions.md
 │   ├── server-api.instructions.md
 │   ├── utils.instructions.md
-│   └── nuxt-config.instructions.md
+│   ├── nuxt-config.instructions.md
+│   └── nuxt-ui.instructions.md    # Nuxt UI components usage
 └── skills/                        # Task-specific skills (loaded when relevant)
     ├── nuxt-documentation-lookup/
     ├── nuxt-module-finder/
     ├── nuxt-deployment-guide/
-    └── nuxt-release-info/
+    ├── nuxt-release-info/
+    ├── nuxt-ui-component-finder/  # Find & explore UI components
+    └── nuxt-ui-theming/            # Customize component themes
 ```
 
 ## 🎯 Instructions vs Skills
@@ -68,6 +71,8 @@ This directory contains custom instructions and skills for GitHub Copilot to bet
 2. **nuxt-module-finder** - Find and evaluate Nuxt modules
 3. **nuxt-deployment-guide** - Get platform-specific deployment instructions
 4. **nuxt-release-info** - Find release announcements and updates
+5. **nuxt-ui-component-finder** - Find and explore Nuxt UI components
+6. **nuxt-ui-theming** - Customize Nuxt UI component themes and styling
 
 ## 🔄 How It Works
 
@@ -148,6 +153,22 @@ Copilot executes workflow and provides recommendations
 **Copilot Uses**:
 - `copilot-instructions.md` (general context)
 - `instructions/nuxt-config.instructions.md` (config patterns)
+
+### Scenario 5: "What UI components are available?"
+
+**Copilot Uses**:
+- `instructions/nuxt-ui.instructions.md` (basic usage)
+- `skills/nuxt-ui-component-finder/` (component discovery)
+
+**Result**: Lists components by category, provides usage examples
+
+### Scenario 6: "How do I customize the Button color?"
+
+**Copilot Uses**:
+- `instructions/nuxt-ui.instructions.md` (component usage)
+- `skills/nuxt-ui-theming/` (theming guide)
+
+**Result**: Shows color props, ui prop customization, and theming options
 
 **Result**: Suggests proper configuration structure and patterns
 

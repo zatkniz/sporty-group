@@ -7,6 +7,7 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 ## Tech Stack
 
 - **Framework**: Nuxt 4.x
+- **UI Library**: Nuxt UI (Tailwind CSS + Reka UI)
 - **Language**: TypeScript
 - **Runtime**: Node.js 20.x+
 - **Package Manager**: npm/yarn/pnpm (check package.json for lock file)
@@ -52,6 +53,12 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 - File: `app/components/MyButton.vue` → Use: `<MyButton />`
 - Nested: `app/components/form/Input.vue` → Use: `<FormInput />`
 - PascalCase conversion: filename → component name
+
+**Nuxt UI Components**
+- All Nuxt UI components auto-imported with `U` prefix
+- Examples: `<UButton>`, `<UCard>`, `<UModal>`, `<UInput>`
+- No imports needed - use directly in templates
+- See `nuxt-ui.instructions.md` for full component list and usage
 
 **Composables** (`app/composables/`)
 - Automatically imported functions
@@ -152,6 +159,7 @@ useHead({
 
 ### TypeScript
 - TypeScript is automatically configured
+- Don't import Nuxt UI components - they're auto-imported with `U` prefix
 - Types are auto-generated in `.nuxt/` directory
 - No need to import Vue types, they're globally available
 
@@ -188,4 +196,6 @@ useHead({
 
 - [Nuxt 4 Documentation](https://nuxt.com/docs/4.x)
 - [Nuxt Modules](https://nuxt.com/modules)
+- [Nuxt UI Documentation](https://ui.nuxt.com)
+- [Nuxt UI Components](https://ui.nuxt.com/docs/components)
 - [Nitro Documentation](https://nitro.build)
