@@ -8,6 +8,7 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 
 - **Framework**: Nuxt 4.x
 - **UI Library**: Nuxt UI (Tailwind CSS + Reka UI)
+- **State Management**: Pinia (via @pinia/nuxt)
 - **Language**: TypeScript
 - **Runtime**: Node.js 20.x+
 - **Package Manager**: npm/yarn/pnpm (check package.json for lock file)
@@ -23,6 +24,7 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
   - `pages/` - File-based routing (each file = route)
   - `components/` - Auto-imported Vue components
   - `composables/` - Auto-imported composables (Vue Composition API functions)
+  - `stores/` - Auto-imported Pinia stores (state management)
   - `layouts/` - Layout wrappers for pages
   - `assets/` - Uncompiled assets (CSS, images processed by build tool)
   - `middleware/` - Route middleware
@@ -68,6 +70,11 @@ This is a Nuxt 4 application using Vue 3, TypeScript, and modern web development
 **Utils** (`app/utils/`)
 - Auto-imported utility functions
 - File: `app/utils/formatDate.ts` → Use: `formatDate(date)`
+
+**Stores** (`app/stores/`)
+- Auto-imported Pinia stores
+- File: `app/stores/user.ts` → Use: `const userStore = useUserStore()`
+- Export stores using `defineStore()`, they'll be available globally
 
 ### Routing
 
@@ -198,4 +205,5 @@ useHead({
 - [Nuxt Modules](https://nuxt.com/modules)
 - [Nuxt UI Documentation](https://ui.nuxt.com)
 - [Nuxt UI Components](https://ui.nuxt.com/docs/components)
+- [Pinia Documentation](https://pinia.vuejs.org)
 - [Nitro Documentation](https://nitro.build)
