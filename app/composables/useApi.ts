@@ -1,8 +1,7 @@
-import type { LeaguesResponse, SeasonsWithBadgeResponse } from '~/types/thesportsdb'
-
 /**
- * Central API composable for TheSportsDB API
- * Provides typed methods for all API endpoints with proper error handling
+ * Thin HTTP client wrapper for TheSportsDB API
+ * Provides base URL and generic fetch method
+ * All business logic and state management should be in stores
  */
 export const useApi = () => {
   const config = useRuntimeConfig()
@@ -31,30 +30,8 @@ export const useApi = () => {
     }
   }
 
-  /**
-   * Get all available leagues
-   * @returns All leagues from all sports
-   */
-  const getAllLeagues = async (): Promise<LeaguesResponse> => {
-    return fetchFromAPI<LeaguesResponse>('all_leagues.php')
-  }
-
-  /**
-   * Get league badge and all seasons
-   * @param leagueId - The league ID
-   * @returns Seasons with badge URL
-   */
-  const getLeagueBadge = async (leagueId: string | number): Promise<SeasonsWithBadgeResponse> => {
-    return fetchFromAPI<SeasonsWithBadgeResponse>('search_all_seasons.php', {
-      badge: 1,
-      id: leagueId
-    })
-  }
-
   return {
     baseURL,
-    fetchFromAPI,
-    getAllLeagues,
-    getLeagueBadge
+    fetchFromAPI
   }
 }

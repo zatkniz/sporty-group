@@ -1,62 +1,57 @@
 <script setup lang="ts">
-useSeoMeta({
-  title: 'Home - Sporty Group',
-  description: 'Welcome to Sporty Group'
+// SEO
+useHead({
+  title: 'Sports Leagues',
+  meta: [
+    { name: 'description', content: 'Browse and search sports leagues from around the world' },
+  ],
+})
+
+// Store
+const store = useSportsLeaguesStore()
+const { leagues, loading, error, filteredLeagues } = storeToRefs(store)
+
+// Fetch leagues on mount
+onMounted(async (): Promise<void> => {
+  await store.fetchLeagues()
 })
 </script>
 
 <template>
-  <div>
-    <UPageHeader
-      title="Welcome to Sporty Group"
-      description="A modern Nuxt application with PrimeVue and Tailwind CSS"
-    />
-
-    <UPageGrid class="mt-8">
-      <UPageCard
-        title="PrimeVue"
-        description="Rich component library with accessibility and customization"
-        icon="i-lucide-box"
+  <UContainer>
+    <div class="space-y-6 py-8">
+      <!-- Page Header -->
+      <UPageHeader
+        title="Sports Leagues"
+        description="Explore leagues from various sports around the world"
       />
-      <UPageCard
-        title="Tailwind CSS"
-        description="Utility-first CSS framework for rapid UI development"
-        icon="i-lucide-palette"
+
+      <!-- Filters -->
+      <LeaguesFilters />
+
+      <!-- Loading State -->
+      <LeaguesLoadingState v-if="loading" />
+
+      <!-- Error State -->
+      <UAlert
+        v-else-if="error"
+        type="error"
+        title="Error Loading Leagues"
+        :description="error"
       />
-      <UPageCard
-        title="Nuxt UI"
-        description="Beautiful and accessible components built with Tailwind"
-        icon="i-lucide-sparkles"
+
+      <!-- Empty State -->
+      <LeaguesEmptyState v-else-if="filteredLeagues.length === 0" />
+
+      <!-- Leagues Grid -->
+      <LeaguesGrid v-else :leagues="filteredLeagues" />
+
+      <!-- Results Count -->
+      <LeaguesResultsCount
+        v-if="!loading && !error"
+        :filtered-count="filteredLeagues.length"
+        :total-count="leagues.length"
       />
-    </UPageGrid>
-
-    <UPageSection class="mt-12">
-      <UCard>
-        <template #header>
-          <h2 class="text-2xl font-bold">Getting Started</h2>
-        </template>
-
-        <div class="prose prose-primary dark:prose-invert">
-          <p>
-            This project combines the power of Nuxt 4, PrimeVue components, 
-            Nuxt UI, and Tailwind CSS to create a modern web application.
-          </p>
-          <p class="text-muted">
-            You can now start building your application with all these tools configured and ready to use.
-          </p>
-        </div>
-
-        <template #footer>
-          <div class="flex gap-3">
-            <UButton color="primary" to="/about">
-              Learn More
-            </UButton>
-            <UButton color="neutral" variant="outline" to="/contact">
-              Contact Us
-            </UButton>
-          </div>
-        </template>
-      </UCard>
-    </UPageSection>
-  </div>
+    </div>
+  </UContainer>
 </template>

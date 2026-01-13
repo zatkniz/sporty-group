@@ -7,6 +7,10 @@ export default defineNuxtConfig({
   
   css: ['~/assets/css/main.css'],
 
+  ui: {
+    icons: ['lucide']
+  },
+
   runtimeConfig: {
     theSportsDbApiKey: process.env.THESPORTSDB_API_KEY || '3',
     public: {

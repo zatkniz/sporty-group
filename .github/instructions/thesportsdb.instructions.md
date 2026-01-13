@@ -42,9 +42,10 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
-### 2. SSR Compatibility (REQUIRED)
-- **ALWAYS use the `useApi` composable** for all API calls
-- **NEVER call TheSportsDB API directly** - use the composable methods
+### 2. Architecture Pattern (REQUIRED)
+- **useApi is a THIN HTTP CLIENT** - provides only `fetchFromAPI<T>()` method
+- **Business logic belongs in STORES** - data fetching, caching, state management
+- **NEVER call TheSportsDB API directly** - always use `api.fetchFromAPI<T>()`
 - The composable handles the base URL and API key automatically
 - All calls are client-side but can be wrapped in server routes if needed
 - V1 API only - no V2 endpoints needed for this project
@@ -53,10 +54,13 @@ export default defineEventHandler(async (event) => {
 // ❌ WRONG - Direct API call
 const teams = await $fetch('https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=Arsenal')
 
-// ✅ CORRECT - Using useApi composable
+// ✅ CORRECT - Using useApi in a store
 const api = useApi()
-const leagues = await api.getAllLeagues()
-const badge = await api.getLeagueBadge('4328')
+const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+const badge = await api.fetchFromAPI<SeasonsWithBadgeResponse>(
+  'search_all_seasons.php',
+  { badge: 1, id: '4328' }
+)
 ```
 
 ### 3. Type Definitions (REQUIRED)
@@ -266,12 +270,18 @@ export default defineEventHandler(async (event) => {
 
 ## PRIMARY USE CASES (PROJECT-SPECIFIC)
 
-### Central API Composable
+### Central API Composable (Thin HTTP Client)
 
-**ALWAYS use the `useApi` composable** - it provides centralized access to all TheSportsDB endpoints.
+**ALWAYS use the `useApi` composable** - it provides a thin HTTP client wrapper for TheSportsDB API.
+
+**useApi is a THIN wrapper** that provides:
+- `baseURL`: Computed base URL with API key
+- `fetchFromAPI<T>()`: Generic method for any endpoint
+
+**Business logic belongs in STORES**, not in useApi.
 
 ```typescript
-// app/composables/useApi.ts (already created)
+// app/composables/useApi.ts (current implementation)
 export const useApi = () => {
   const config = useRuntimeConfig()
   
@@ -279,237 +289,145 @@ export const useApi = () => {
     `${config.public.theSportsDbBaseUrl}/${config.public.theSportsDbApiKey || '3'}`
   )
 
-  const fetchFromAPI = async <T>(endpoint: string, params?: Record<string, string | number>): Promise<T> => {
-    // ... implementation
+  const fetchFromAPI = async <T>(
+    endpoint: string,
+    params?: Record<string, string | number>
+  ): Promise<T> => {
+    const url = `${baseURL.value}/${endpoint}`
+    try {
+      return await $fetch<T>(url, { params })
+    } catch (error) {
+      console.error(`TheSportsDB API Error [${endpoint}]:`, error)
+      throw error
+    }
   }
 
-  const getAllLeagues = async (): Promise<LeaguesResponse> => {
-    return fetchFromAPI<LeaguesResponse>('all_leagues.php')
-  }
-
-  const getLeagueBadge = async (leagueId: string | number): Promise<SeasonsWithBadgeResponse> => {
-    return fetchFromAPI<SeasonsWithBadgeResponse>('search_all_seasons.php', {
-      badge: 1,
-      id: leagueId
-    })
-  }
-
-  return { baseURL, fetchFromAPI, getAllLeagues, getLeagueBadge }
+  return { baseURL, fetchFromAPI }
 }
 ```
 
-### Use Case 1: Get All Leagues
+### Use Case 1: Fetch Data in Store (RECOMMENDED)
 
 ```typescript
-// In any component or composable
-<script setup lang="ts">
-const api = useApi()
-const leagues = ref<League[]>([])
-const loading = ref(false)
+// app/stores/sportsLeagues.ts
+import type { League, LeaguesResponse } from '~/types'
 
-const fetchLeagues = async (): Promise<void> => {
-  loading.value = true
-  try {
-    const response = await api.getAllLeagues()
-    leagues.value = response.leagues
-  } catch (error) {
-    console.error('Error:', error)
-  } finally {
-    loading.value = false
+export const useSportsLeaguesStore = defineStore('sportsLeagues', () => {
+  const leagues = ref<League[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
+
+  const fetchLeagues = async (): Promise<void> => {
+    loading.value = true
+    error.value = null
+    
+    try {
+      const api = useApi()
+      const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+      leagues.value = response.leagues
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Failed to fetch leagues'
+    } finally {
+      loading.value = false
+    }
   }
-}
 
-onMounted(() => fetchLeagues())
-</script>
+  return {
+    leagues: readonly(leagues),
+    loading: readonly(loading),
+    error: readonly(error),
+    fetchLeagues
+  }
+})
+
+// In component
+const store = useSportsLeaguesStore()
+await store.fetchLeagues()
 ```
 
-### Use Case 2: Get League Badge
+### Use Case 2: Get League Badge (in Store)
 
 ```typescript
-// In any component or composable
-<script setup lang="ts">
-const api = useApi()
+// app/stores/sportsLeagues.ts (continued)
+const badgeCache = useLocalStorage<Record<string, string>>('league-badges', {})
 
-const getBadge = async (leagueId: string): Promise<string | null> => {
+const fetchBadge = async (leagueId: string): Promise<string | null> => {
+  // Check cache first
+  if (badgeCache.value[leagueId]) {
+    return badgeCache.value[leagueId]
+  }
+
   try {
-    const response = await api.getLeagueBadge(leagueId)
-    return response.seasons[0]?.strBadge ?? null
+    const api = useApi()
+    const response = await api.fetchFromAPI<SeasonsWithBadgeResponse>(
+      'search_all_seasons.php',
+      { badge: 1, id: leagueId }
+    )
+    
+    const badgeUrl = response.seasons[0]?.strBadge
+    if (badgeUrl) {
+      badgeCache.value[leagueId] = badgeUrl
+      return badgeUrl
+    }
+    return null
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error fetching badge:', error)
     return null
   }
 }
-</script>
 ```
 
-### Higher-Level Composables
+### Badge Fetching (via Store)
 
-Build feature-specific composables on top of `useApi`:
+Badge fetching with caching is handled by the store:
 
 ```typescript
-// composables/useLeagues.ts (already created)
-export const useLeagues = () => {
-  const api = useApi()
-  const leagues = ref<League[]>([])
-  
-  const fetchLeagues = async (): Promise<void> => {
-    const response = await api.getAllLeagues()
-    leagues.value = response.leagues
-  }
-  
-  const filterBySport = (sport: string): League[] => {
-    return leagues.value.filter(l => l.strSport === sport)
-  }
-  
-  return { leagues, fetchLeagues, filterBySport }
-}
-
-// composables/useLeagueBadge.ts (already created)
-export const useLeagueBadge = () => {
-  const api = useApi()
-  
-  const fetchBadge = async (leagueId: string | number) => {
-    const response = await api.getLeagueBadge(leagueId)
-    return {
-      badge: response.seasons[0]?.strBadge ?? null,
-      seasons: response.seasons
-    }
-  }
-  
-  return { fetchBadge }
-}
+// In a component - uses localStorage cache automatically
+const store = useSportsLeaguesStore()
+const badgeUrl = await store.fetchBadge(leagueId)
 ```
 
-## LEGACY PATTERNS (DO NOT USE)
+## ARCHITECTURE RULES
 
-### ❌ Old Pattern: Server Routes
+### ✅ CORRECT Pattern: Thin HTTP Client + Store
 
-**DO NOT create server routes** - use `useApi` composable directly in components.
-
-```typescript
-// ❌ WRONG - Don't create this
-// server/api/leagues/all.ts
-export default defineEventHandler(async (event): Promise<LeaguesResponse> => {
-  // ... old pattern
-})
-
-// ❌ WRONG - Don't do this
-const leagues = await $fetch('/api/leagues/all')
-```
-
-### ✅ New Pattern: useApi Composable
+**useApi** = Thin HTTP client (only `fetchFromAPI<T>()`)
+**Store** = Business logic, state management, caching
 
 ```typescript
-// ✅ CORRECT - Use composable directly
+// ✅ CORRECT - Business logic in store
 const api = useApi()
-const response = await api.getAllLeagues()
+const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+leagues.value = response.leagues
+```
+
+### ❌ WRONG Patterns
+
+```typescript
+// ❌ WRONG - Direct API call
+const teams = await $fetch('https://www.thesportsdb.com/api/v1/json/3/searchteams.php')
+
+// ❌ WRONG - Business logic in useApi
+export const useApi = () => {
+  const getAllLeagues = async () => { /* ... */ }  // NO!
+  const getLeagueBadge = async () => { /* ... */ } // NO!
+}
+
+// ❌ WRONG - Creating server routes for client data
+export default defineEventHandler(async () => {
+  // Don't do this for simple API proxying
+})
 ```
 
 ## ADDITIONAL PATTERNS
 
-### Use Case 1: Get All Leagues
-
-**This is the main entry point for the application.**
+### Pattern 1: Store with Caching
 
 ```typescript
-// server/api/leagues/all.ts
-import type { LeaguesResponse } from '~/types/thesportsdb'
+// app/stores/sportsLeagues.ts
+import type { League, LeaguesResponse, SeasonsWithBadgeResponse } from '~/types'
 
-export default defineEventHandler(async (): Promise<LeaguesResponse> => {
-  const config = useRuntimeConfig()
-  
-  try {
-    const data = await $fetch<LeaguesResponse>(
-      `https://www.thesportsdb.com/api/v1/json/${config.theSportsDbApiKey}/all_leagues.php`
-    )
-
-    return data
-  } catch (error) {
-    console.error('Error fetching all leagues:', error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch leagues'
-    })
-  }
-})
-
-// composables/useLeagues.ts
-export const useLeagues = () => {
-  const { data, error, pending, refresh } = useFetch<LeaguesResponse>('/api/leagues/all', {
-    lazy: true
-  })
-
-  const leagues = computed(() => data.value?.leagues ?? [])
-
-  return {
-    leagues,
-    loading: pending,
-    error,
-    refresh
-  }
-}
-```
-
-### Use Case 2: Get League Badges and Seasons
-
-**Used to display league badges and available seasons.**
-
-```typescript
-// server/api/leagues/badges/[id].ts
-import type { SeasonsWithBadgeResponse } from '~/types/thesportsdb'
-
-export default defineEventHandler(async (event): Promise<SeasonsWithBadgeResponse> => {
-  const config = useRuntimeConfig()
-  const leagueId = getRouterParam(event, 'id')
-
-  if (!leagueId) {
-    throw createError({
-      statusCode: 400,
-      message: 'League ID is required'
-    })
-  }
-
-  try {
-    const data = await $fetch<SeasonsWithBadgeResponse>(
-      `https://www.thesportsdb.com/api/v1/json/${config.theSportsDbApiKey}/search_all_seasons.php`,
-      {
-        params: { badge: 1, id: leagueId }
-      }
-    )
-
-    return data
-  } catch (error) {
-    console.error(`Error fetching badge for league ${leagueId}:`, error)
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to fetch league badge'
-    })
-  }
-})
-
-// composables/useLeagueBadge.ts
-export const useLeagueBadge = (leagueId: MaybeRef<string>) => {
-  const id = computed(() => unref(leagueId))
-  
-  const { data, error, pending } = useFetch<SeasonsWithBadgeResponse>(
-    () => `/api/leagues/badges/${id.value}`,
-    {
-      lazy: true,
-      watch: [id]
-    }
-  )
-
-  const seasons = computed(() => data.value?.seasons ?? [])
-  const badge = computed(() => seasons.value[0]?.strBadge ?? '')
-
-  return {
-    seasons,
-    badge,
-    loading: pending,
-    error
-  }
-}
-```
+export const useSportsLeaguesStore = defineStore('sportsLeagues', () => {\n  const api = useApi()\n  const leagues = ref<League[]>([])\n  const loading = ref(false)\n  \n  // Badge cache with VueUse\n  const badgeCache = useLocalStorage<Record<string, string>>('league-badges', {})\n\n  const fetchLeagues = async (): Promise<void> => {\n    loading.value = true\n    try {\n      const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')\n      leagues.value = response.leagues\n    } finally {\n      loading.value = false\n    }\n  }\n  \n  const fetchBadge = async (leagueId: string): Promise<string | null> => {\n    // Check cache\n    if (badgeCache.value[leagueId]) {\n      return badgeCache.value[leagueId]\n    }\n    \n    // Fetch from API\n    const response = await api.fetchFromAPI<SeasonsWithBadgeResponse>(\n      'search_all_seasons.php',\n      { badge: 1, id: leagueId }\n    )\n    \n    const badgeUrl = response.seasons[0]?.strBadge\n    if (badgeUrl) {\n      badgeCache.value[leagueId] = badgeUrl\n    }\n    return badgeUrl ?? null\n  }\n  \n  return { leagues: readonly(leagues), loading: readonly(loading), fetchLeagues, fetchBadge }\n})\n```
 
 ## ADDITIONAL PATTERNS
 

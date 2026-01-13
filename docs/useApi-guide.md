@@ -1,167 +1,158 @@
 # useApi Composable - TheSportsDB Integration
 
-Central API composable for all TheSportsDB API interactions in the Sporty Group project.
+Thin HTTP client wrapper for TheSportsDB API interactions in the Sporty Group project.
+
+## Architecture
+
+**useApi is a lightweight HTTP client** - it provides:
+- Base URL configuration
+- Generic `fetchFromAPI<T>()` method
+- Error logging
+
+**Business logic lives in stores** - data fetching, caching, and state management should be in Pinia stores, not in useApi.
 
 ## Quick Start
 
 ```typescript
-// In any Vue component or composable
+// In a Pinia store or composable
 const api = useApi()
 
-// Get all leagues
-const response = await api.getAllLeagues()
+// Generic API call
+const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
 const leagues = response.leagues
 
-// Get league badge
-const badgeData = await api.getLeagueBadge('4328')
-const badge = badgeData.seasons[0]?.strBadge
+// With parameters
+const badgeData = await api.fetchFromAPI<SeasonsWithBadgeResponse>(
+  'search_all_seasons.php',
+  { badge: 1, id: '4328' }
+)
 ```
 
 ## Available Methods
 
-### `getAllLeagues()`
-Fetches all available leagues from all sports.
+### `baseURL`
+Computed property for the API base URL.
 
 ```typescript
 const api = useApi()
-const response = await api.getAllLeagues()
-// Returns: LeaguesResponse { leagues: League[] }
-```
-
-### `getLeagueBadge(leagueId)`
-Fetches badge and seasons for a specific league.
-
-```typescript
-const api = useApi()
-const response = await api.getLeagueBadge('4328')
-// Returns: SeasonsWithBadgeResponse { seasons: Season[] }
+console.log(api.baseURL.value)
+// "https://www.thesportsdb.com/api/v1/json/3"
 ```
 
 ### `fetchFromAPI<T>(endpoint, params?)`
-Generic method for custom API calls.
+Generic method for making API calls.
 
 ```typescript
 const api = useApi()
-const data = await api.fetchFromAPI<CustomResponse>('custom_endpoint.php', {
-  param1: 'value1',
-  param2: 'value2'
+
+// Simple call
+const data = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+
+// With parameters
+const data = await api.fetchFromAPI<CustomResponse>(
+  'custom_endpoint.php',
+  { param1: 'value1', param2: 123 }
+)
+```
+
+## Higher-Level Usage
+
+### Using Stores (Recommended)
+For data fetching with state management, use Pinia stores.
+
+```typescript
+// app/stores/sportsLeagues.ts
+export const useSportsLeaguesStore = defineStore('sportsLeagues', () => {
+  const leagues = ref<League[]>([])
+  const loading = ref(false)
+  
+  const fetchLeagues = async (): Promise<void> => {
+    loading.value = true
+    try {
+      const api = useApi()
+      const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+      leagues.value = response.leagues
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  return { leagues: readonly(leagues), loading: readonly(loading), fetchLeagues }
 })
+
+// In component
+const store = useSportsLeaguesStore()
+await store.fetchLeagues()
 ```
 
-## Higher-Level Composables
-
-### useLeagues
-Feature-rich composable for league management.
+### Using the Store for Badges
+Badge fetching with caching is handled by the store.
 
 ```typescript
-const { leagues, loading, error, fetchLeagues, filterBySport, searchLeagues } = useLeagues()
+// In a component
+const store = useSportsLeaguesStore()
 
-// Fetch all leagues
-await fetchLeagues()
-
-// Filter by sport
-const soccerLeagues = filterBySport('Soccer')
-
-// Search
-const results = searchLeagues('premier')
-```
-
-### useLeagueBadge
-Simplified badge fetching.
-
-```typescript
-const { fetchBadge, getLatestSeason } = useLeagueBadge()
-
-// Get badge and seasons
-const { badge, seasons } = await fetchBadge('4328')
-
-// Get only latest season
-const latestSeason = await getLatestSeason('4328')
+// Fetch badge (uses localStorage cache automatically)
+const badgeUrl = await store.fetchBadge(leagueId)
 ```
 
 ## Examples
 
-### Component Example
-
-```vue
-<template>
-  <div>
-    <h1>Leagues</h1>
-    <div v-if="loading">Loading...</div>
-    <div v-else>
-      <div v-for="league in leagues" :key="league.idLeague">
-        <h3>{{ league.strLeague }}</h3>
-        <p>{{ league.strSport }}</p>
-        <img v-if="badges[league.idLeague]" :src="badges[league.idLeague]" />
-      </div>
-    </div>
-  </div>
-</template>
-
-<script setup lang="ts">
-import type { League } from '~/types'
-
-const api = useApi()
-const { fetchBadge } = useLeagueBadge()
-
-const leagues = ref<League[]>([])
-const badges = ref<Record<string, string>>({})
-const loading = ref(false)
-
-const loadLeagues = async (): Promise<void> => {
-  loading.value = true
-  try {
-    const response = await api.getAllLeagues()
-    leagues.value = response.leagues.slice(0, 10) // First 10
-    
-    // Load badges
-    for (const league of leagues.value) {
-      const { badge } = await fetchBadge(league.idLeague)
-      if (badge) badges.value[league.idLeague] = badge
-    }
-  } catch (error) {
-    console.error('Error loading leagues:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => loadLeagues())
-</script>
-```
-
-### Composable Example
+### Store Example (Recommended)
 
 ```typescript
-// composables/useSoccerLeagues.ts
-import type { League } from '~/types'
+// app/stores/myLeagues.ts
+import type { League, LeaguesResponse } from '~/types'
 
-export const useSoccerLeagues = () => {
+export const useMyLeaguesStore = defineStore('myLeagues', () => {
   const api = useApi()
-  
-  const soccerLeagues = ref<League[]>([])
+  const leagues = ref<League[]>([])
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
-  const fetchSoccerLeagues = async (): Promise<void> => {
+  const fetchLeagues = async (): Promise<void> => {
     loading.value = true
+    error.value = null
     try {
-      const response = await api.getAllLeagues()
-      soccerLeagues.value = response.leagues.filter(
-        l => l.strSport === 'Soccer'
-      )
-    } catch (error) {
-      console.error('Error:', error)
+      const response = await api.fetchFromAPI<LeaguesResponse>('all_leagues.php')
+      leagues.value = response.leagues
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to fetch'
     } finally {
       loading.value = false
     }
   }
 
   return {
-    soccerLeagues: readonly(soccerLeagues),
+    leagues: readonly(leagues),
     loading: readonly(loading),
-    fetchSoccerLeagues
+    error: readonly(error),
+    fetchLeagues
   }
-}
+})
+```
+
+### Component Using Store
+
+```vue
+<template>
+  <div>
+    <div v-if="loading">Loading...</div>
+    <div v-else-if="error">{{ error }}</div>
+    <div v-else>
+      <div v-for="league in leagues" :key="league.idLeague">
+        {{ league.strLeague }}
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+const store = useMyLeaguesStore()
+const { leagues, loading, error } = storeToRefs(store)
+
+onMounted(() => store.fetchLeagues())
+</script>
 ```
 
 ## Configuration
@@ -228,18 +219,18 @@ npm run dev
 
 ## Best Practices
 
-1. **Always use `useApi`** - Never make direct API calls
-2. **Use higher-level composables** - Build on `useApi` for features
-3. **Handle errors** - Always wrap calls in try-catch
-4. **Cache results** - Store frequently accessed data
-5. **Type everything** - Use TypeScript types from `~/types`
-6. **Limit results** - Don't load all data at once
+1. **Keep useApi thin** - Only HTTP client logic, no business logic
+2. **Use stores for state** - Data fetching with state management belongs in Pinia stores
+3. **Use composables for logic** - Reusable logic without state in composables
+4. **Always use `fetchFromAPI`** - Never make direct $fetch calls to TheSportsDB
+5. **Handle errors** - Always wrap calls in try-catch
+6. **Type everything** - Use TypeScript types from `~/types`
+7. **Cache in stores** - Implement caching logic in stores, not in useApi
 
 ## Files Created
 
 - `app/composables/useApi.ts` - Central API composable
-- `app/composables/useLeagues.ts` - Leagues management
-- `app/composables/useLeagueBadge.ts` - Badge fetching
+- `app/stores/sportsLeagues.ts` - Main leagues store with business logic (includes badge fetching)
 - `app/types/thesportsdb.ts` - API types
 - `app/pages/demo.vue` - Working demo
 - `nuxt.config.ts` - Updated with runtime config
