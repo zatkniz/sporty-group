@@ -1,197 +1,103 @@
-# Copilot Configuration
+# Sports Leagues SPA
 
-This directory contains custom instructions and skills for GitHub Copilot to better understand and work with this Nuxt 4 project.
+A single-page application that displays sports leagues from around the world with filtering capabilities and badge viewing.
 
-## 📁 Structure
+![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?logo=vue.js)
+![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?logo=nuxt.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.x-06B6D4?logo=tailwindcss)
 
-```
-.github/
-├── copilot-instructions.md        # Repository-wide instructions (always loaded)
-├── instructions/                  # Path-specific instructions (loaded for matching files)
-│   ├── components.instructions.md
-│   ├── composables.instructions.md
-│   ├── layouts.instructions.md
-│   ├── pages.instructions.md
-│   ├── server-api.instructions.md
-│   ├── utils.instructions.md
-│   ├── nuxt-config.instructions.md
-│   └── nuxt-ui.instructions.md    # Nuxt UI components usage
-└── skills/                        # Task-specific skills (loaded when relevant)
-    ├── nuxt-documentation-lookup/
-    ├── nuxt-module-finder/
-    ├── nuxt-deployment-guide/
-    ├── nuxt-release-info/
-    ├── nuxt-ui-component-finder/  # Find & explore UI components
-    └── nuxt-ui-theming/            # Customize component themes
-```
+## Features
 
-## 🎯 Instructions vs Skills
+- 🏆 **Browse Leagues** - View all sports leagues from TheSportsDB API
+- 🔍 **Search** - Filter leagues by name in real-time
+- 🎯 **Filter by Sport** - Dropdown to filter by sport type (Soccer, Basketball, etc.)
+- 🏅 **View Badges** - Click any league to view its season badge
+- 💾 **Caching** - Badge responses are cached in localStorage
+- 📱 **Responsive** - Works on mobile, tablet, and desktop
+- 🌙 **Dark Mode** - Automatic dark mode support
 
-### Instructions (`.github/copilot-instructions.md` & `.github/instructions/`)
+## Tech Stack
 
-**Always loaded** - Provide persistent context about the project.
+- **Framework**: [Nuxt 4](https://nuxt.com/) + [Vue 3](https://vuejs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **UI Library**: [Nuxt UI](https://ui.nuxt.com/) + [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**: [Pinia](https://pinia.vuejs.org/)
+- **Utilities**: [VueUse](https://vueuse.org/)
+- **API**: [TheSportsDB](https://www.thesportsdb.com/free_sports_api)
 
-- **Purpose**: Describe how the project works, conventions, structure, build commands
-- **When**: Always active, providing constant context to Copilot
-- **Content**: 
-  - Project overview and tech stack
-  - Directory structure and conventions
-  - Auto-import rules
-  - Build/test commands
-  - Configuration patterns
-  - Best practices for each file type
+## Getting Started
 
-**Repository-wide instructions** (`copilot-instructions.md`):
-- General project information
-- Build and development commands
-- Common troubleshooting
-- Tech stack and conventions
+### Prerequisites
 
-**Path-specific instructions** (`instructions/*.instructions.md`):
-- Apply only when working with matching files
-- Specific to file types (components, pages, composables, etc.)
-- Code patterns and examples
-- File-specific best practices
+- Node.js 20.x or higher
+- npm, yarn, or pnpm
 
-### Skills (`.github/skills/`)
+### Installation
 
-**Loaded when relevant** - Step-by-step processes for specific tasks.
+```bash
+# Clone the repository
+git clone https://github.com/zatkniz/sporty-group.git
+cd sporty-group
 
-- **Purpose**: Provide workflows for specific tasks that require external tools/data
-- **When**: Loaded by Copilot when task matches skill description
-- **Content**:
-  - When to use the skill
-  - Step-by-step process
-  - Tool invocations
-  - Examples
-
-**Available Skills**:
-
-1. **nuxt-documentation-lookup** - Look up Nuxt API docs for advanced features
-2. **nuxt-module-finder** - Find and evaluate Nuxt modules
-3. **nuxt-deployment-guide** - Get platform-specific deployment instructions
-4. **nuxt-release-info** - Find release announcements and updates
-5. **nuxt-ui-component-finder** - Find and explore Nuxt UI components
-6. **nuxt-ui-theming** - Customize Nuxt UI component themes and styling
-
-## 🔄 How It Works
-
-### Instructions Flow
-```
-User edits app/components/Button.vue
-    ↓
-Copilot loads: copilot-instructions.md (always)
-    ↓
-Copilot loads: instructions/components.instructions.md (matches path)
-    ↓
-Copilot provides context-aware suggestions
+# Install dependencies
+npm install
 ```
 
-### Skills Flow
-```
-User: "I need authentication for my Nuxt app"
-    ↓
-Copilot recognizes task matches "nuxt-module-finder" skill
-    ↓
-Skill provides step-by-step process:
-  1. Search modules with category: "auth"
-  2. Compare options
-  3. Get details for best match
-  4. Provide installation steps
-    ↓
-Copilot executes workflow and provides recommendations
+### Development
+
+Start the development server on `http://localhost:3000`:
+
+```bash
+npm run dev
 ```
 
-## 📝 Key Principles
+### Production
 
-### Instructions Should:
-- ✅ Be concise (2 pages max per file)
-- ✅ Focus on conventions and structure
-- ✅ Provide code examples
-- ✅ Explain auto-import behavior
-- ✅ Document build/test commands
-- ❌ NOT include task-specific workflows
-- ❌ NOT duplicate content between files
+Build for production:
 
-### Skills Should:
-- ✅ Have clear "When to Use" section
-- ✅ Provide step-by-step process
-- ✅ Specify tool invocations
-- ✅ Include examples
-- ✅ Be task-focused
-- ❌ NOT duplicate instructions content
-- ❌ NOT cover basic project conventions
+```bash
+npm run build
+```
 
-## 🔍 Example Scenarios
+Preview the production build:
 
-### Scenario 1: Creating a Component
+```bash
+npm run preview
+```
 
-**Copilot Uses**: 
-- `copilot-instructions.md` (auto-import rules)
-- `instructions/components.instructions.md` (component patterns)
+## Project Structure
 
-**Result**: Suggests properly structured component with auto-imports
+```
+app/
+├── components/         # Vue components
+│   ├── LeagueCard.vue     # Individual league card
+│   ├── LeaguesFilters.vue # Search & filter controls
+│   ├── LeaguesGrid.vue    # Grid layout for leagues
+│   └── BadgeModal.vue     # Modal for displaying badges
+├── composables/        # Reusable composition functions
+│   └── useApi.ts          # API client wrapper
+├── stores/             # Pinia stores
+│   └── sportsLeagues.ts   # Leagues state management
+├── types/              # TypeScript definitions
+│   └── thesportsdb.ts     # API response types
+├── pages/              # Route pages
+│   └── index.vue          # Main leagues page
+└── layouts/            # Layout components
+    └── default.vue        # Default layout
+```
 
-### Scenario 2: "I need authentication"
+## API Endpoints
 
-**Copilot Uses**:
-- `copilot-instructions.md` (project context)
-- `skills/nuxt-module-finder/` (finds auth modules)
+| Endpoint | Description |
+|----------|-------------|
+| `all_leagues.php` | Fetch all sports leagues |
+| `search_all_seasons.php?badge=1&id={id}` | Fetch league badge by ID |
 
-**Result**: Searches modules, recommends best option, provides installation
+## Documentation
 
-### Scenario 3: "How do I use Nuxt hooks?"
+For detailed development documentation, including architecture decisions and AI tools used, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
-**Copilot Uses**:
-- `copilot-instructions.md` (project context)
-- `skills/nuxt-documentation-lookup/` (retrieves hook documentation)
+## License
 
-**Result**: Fetches official docs, provides examples with project context
-
-### Scenario 4: Editing `nuxt.config.ts`
-
-**Copilot Uses**:
-- `copilot-instructions.md` (general context)
-- `instructions/nuxt-config.instructions.md` (config patterns)
-
-### Scenario 5: "What UI components are available?"
-
-**Copilot Uses**:
-- `instructions/nuxt-ui.instructions.md` (basic usage)
-- `skills/nuxt-ui-component-finder/` (component discovery)
-
-**Result**: Lists components by category, provides usage examples
-
-### Scenario 6: "How do I customize the Button color?"
-
-**Copilot Uses**:
-- `instructions/nuxt-ui.instructions.md` (component usage)
-- `skills/nuxt-ui-theming/` (theming guide)
-
-**Result**: Shows color props, ui prop customization, and theming options
-
-**Result**: Suggests proper configuration structure and patterns
-
-## 🛠️ Maintenance
-
-### When to Update Instructions:
-- Project structure changes
-- New conventions adopted
-- Build process changes
-- New file types added
-
-### When to Update Skills:
-- New tools/APIs available
-- Workflow processes change
-- New task patterns emerge
-
-### When to Add New Skills:
-- Repetitive task that requires multiple steps
-- Task that needs external data/tools
-- Clear workflow that benefits from automation
-
-## 📚 Additional Resources
-
-- [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills)
-- [Repository Custom Instructions](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions)
-- [Agent Skills Standard](https://github.com/agentskills/agentskills)
+This project is for demonstration purposes.

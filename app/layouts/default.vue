@@ -30,7 +30,7 @@
           icon="i-simple-icons-github"
           color="neutral"
           variant="ghost"
-          to="https://github.com"
+          to="https://github.com/zatkniz/sporty-group"
           target="_blank"
           aria-label="GitHub"
         />
